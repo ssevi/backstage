@@ -11,6 +11,14 @@ import 'screens/more.dart'; // Importing CompanySetupPage
 import 'components/navbar_wrapper.dart'; // Import the CommonNavigationBar widget
 import 'screens/calendar.dart'; // Importing CompanySetupPage
 import 'screens/payments.dart'; // Importing CompanySetupPage
+import 'screens/team_members.dart'; // Importing CompanySetupPage
+import 'screens/about_company.dart'; // Importing CompanySetupPage
+import 'screens/terms_conditions.dart'; // Importing CompanySetupPage
+import 'screens/links.dart'; // Importing CompanySetupPage
+import 'screens/bank_details.dart'; // Importing CompanySetupPage
+
+
+
 
 void main() async {
   // Initialize Hive
@@ -39,6 +47,15 @@ class MyApp extends StatelessWidget {
         '/more': (context) => NavbarWrapper(body: MorePage()),  // Wrap MorePage with navigation bar
         '/calendar': (context) => NavbarWrapper(body: Calendar()),  // Wrap MorePage with navigation bar
         '/payments': (context) => NavbarWrapper(body: Payments()),  // Wrap MorePage with navigation bar
+        '/team_members': (context) => TeamMembersPage(), // Add the TeamMembersPage route about_company
+        '/about_company': (context) => AboutCompany(), // Add the TeamMembersPage route  terms_conditions
+        '/terms_conditions': (context) => TermsConditions(), // Add the TeamMembersPage route 
+        '/links': (context) => Links(), // Add the TeamMembersPage route 
+        '/bank_details': (context) => BankDetails(), // Add the TeamMembersPage route  
+
+
+
+
 
       },
       // home: Scaffold(

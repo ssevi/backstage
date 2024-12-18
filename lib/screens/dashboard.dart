@@ -1,7 +1,6 @@
 import 'package:backstage/styles/colors.dart';
 import 'package:flutter/material.dart';
 import '/components/appbar.dart';
-import '/components/commonnavigationbar.dart';
 import '/screens/project_added.dart';
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -57,7 +56,7 @@ class Dashboard extends StatelessWidget {
                       const Text(
                         'You don\'t have any projects.',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

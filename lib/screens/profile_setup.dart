@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:io'; // For handling File
-import 'package:image_picker/image_picker.dart'; // For picking images
-import '/styles/colors.dart'; // Importing your custom colors
-import 'package:permission_handler/permission_handler.dart';
-import '/components/button.dart'; // Importing your custom button
-import '/screens/company_setup.dart'; // Importing CompanySetupPage
-
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '/styles/colors.dart';
+import '/components/button.dart';
+import '/screens/company_setup.dart';
+import '/services/profile_setup_service.dart';
+import 'package:hive/hive.dart';
+import '/services/constants.dart';
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
 
@@ -14,10 +15,15 @@ class ProfileSetupPage extends StatefulWidget {
 }
 
 class _ProfileSetupPageState extends State<ProfileSetupPage> {
+  // Pass the baseUrl constant to the service constructor
+  final ProfileSetupService _service = ProfileSetupService(baseUrl);
+
+
   File? _selectedImage;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   bool _isButtonEnabled = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -28,7 +34,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   void _checkValidation() {
     setState(() {
-      // Enable the button if the name field is not empty
       _isButtonEnabled = _nameController.text.trim().isNotEmpty;
     });
   }
@@ -46,6 +51,52 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _submitProfile() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Retrieve userId from Hive
+      final box = Hive.box('user_data');
+      final userId = box.get('user_id', defaultValue: '');
+
+      if (userId.isEmpty) {
+        throw Exception('User ID not found. Please log in again.');
+      }
+
+      // Validate email if entered
+      if (_emailController.text.isNotEmpty &&
+          !_isValidEmail(_emailController.text.trim())) {
+        throw Exception('Please enter a valid email address.');
+      }
+
+      // Call the service to create profile
+      final result = await _service.createProfile(
+        userId: userId,
+        userFullName: _nameController.text.trim(),
+        userEmail: _emailController.text.trim(),
+        userProfilePhoto: _selectedImage,
+      );
+      print(result);
+      if (result['success'] == true) {
+        // Navigate to the next page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CompanySetupPage()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -195,35 +246,27 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                           child: CustomButton(
                             text: 'Continue',
                             onPressed: _isButtonEnabled
-                                ? () {
-                                    if (_emailController.text.isNotEmpty &&
-                                        !_isValidEmail(
-                                            _emailController.text.trim())) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                              'Please enter a valid email address.'),
-                                          backgroundColor: Colors.red,
-                                          action: SnackBarAction(
-                                            label: 'Dismiss',
-                                            textColor: Colors.white,
-                                            onPressed: () {}, // Dismiss action
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      // Navigate to the next page if validation passes
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CompanySetupPage(),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                : null,
+    ? () {
+        if (_emailController.text.isNotEmpty &&
+            !_isValidEmail(_emailController.text.trim())) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Please enter a valid email address.'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: 'Dismiss',
+                textColor: Colors.white,
+                onPressed: () {}, // Dismiss action
+              ),
+            ),
+          );
+        } else {
+          // Call the function to submit the profile if validation passes
+          _submitProfile();
+        }
+      }
+    : null,
+
                           ),
                         ),
                       ),

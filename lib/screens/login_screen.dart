@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '/components/button.dart'; // Import your CustomButton
+import '/services/constants.dart'; // Import the constants
+import '/services/login_service.dart'; // Import the API service
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _mobileController = TextEditingController();
   bool _isButtonEnabled = false;
+  final ApiService _apiService = ApiService(baseUrl);
 
   @override
   void dispose() {
@@ -21,12 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onTextChanged(String value) {
     setState(() {
-      // Validate mobile number: 10 digits starting with 6-9
-      // Validate mobile number: 10 digits starting with 6-9
       bool isValid = value.length == 10 && RegExp(r'^[6-9]').hasMatch(value);
-      _isButtonEnabled = isValid;            // If the mobile number is invalid, show the validation message
+      _isButtonEnabled = isValid;
+
+      // Show validation message if the number is invalid after 10 digits
       if (value.length == 10 && !isValid) {
-        // Show Snackbar for invalid mobile number
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("This is not a valid mobile number")),
@@ -36,20 +38,39 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _saveNumberAndNavigate() async {
-    try {
-      final box = Hive.box('user_data');
-      await box.put('mobile_number', _mobileController.text);
+  Future<void> _handleLogin() async {
+    final mobileNumber = _mobileController.text.trim();
 
-      // Navigate to the OTP page
-      if (context.mounted) {
-        Navigator.pushNamed(context, '/otp');
+    try {
+      final result = await _apiService.login(mobileNumber);
+
+      if (result['success'] == true) {
+        final box = Hive.box('user_data');
+        await box.put('mobile_number', mobileNumber);
+        await box.put('user_id', result['userId']); // Save userId to Hive
+        print('nmm: $mobileNumber');
+
+        print('API Response: $result');
+
+        if (context.mounted) {
+          Navigator.pushNamed(context, '/otp', arguments: {
+            'otp': result['otp'], // Pass OTP and userId to the next screen
+            'userId': result['userId'],
+          });
+        }
+      } else {
+        // Show error message from API
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result['message'] ?? 'Login failed')),
+          );
+        }
       }
     } catch (e) {
-      // Show error if saving fails
+      // Handle any exceptions
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to save number. Please try again.")),
+          SnackBar(content: Text("Error: $e")),
         );
       }
     }
@@ -109,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
                       counterText: '',
-                      labelStyle: const TextStyle(color: Colors.black38),
                       hintText: 'Enter your mobile number',
                       hintStyle: const TextStyle(color: Colors.black38),
                       contentPadding: const EdgeInsets.symmetric(
@@ -128,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   CustomButton(
                     text: 'Continue',
-                    onPressed: _isButtonEnabled ? _saveNumberAndNavigate : null,
+                    onPressed: _isButtonEnabled ? _handleLogin : null,
                   ),
                   const SizedBox(height: 46),
                   Center(

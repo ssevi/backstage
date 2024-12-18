@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '/components/button.dart'; // Import your CustomButton
 import '/screens/profile_setup.dart';
+import '/services/otp_verify.dart';
+import '/services/constants.dart';
+
+final otpService = OtpService(baseUrl);
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -30,8 +34,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   void _loadMobileNumber() async {
     final box = Hive.box('user_data');
-    mobileNumber = box.get('mobile_number',
-        defaultValue: ''); // Load mobile number from Hive
+    mobileNumber = box.get('mobile_number', defaultValue: '');
     setState(() {});
   }
 
@@ -54,7 +57,6 @@ class _OtpScreenState extends State<OtpScreen> {
       _start = 30; // Reset timer for resend OTP
     });
     _startTimer(); // Restart timer
-    // Add logic to resend OTP here
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("OTP has been resent!")),
     );
@@ -62,15 +64,62 @@ class _OtpScreenState extends State<OtpScreen> {
 
   void _onOtpChanged(String value, int index) {
     if (value.isNotEmpty && index < 5) {
-      // Move focus to next field if the value is not empty
       FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
     }
-    // Check if all OTP fields are filled to enable Login button
     setState(() {
       isOtpValid =
           _otpControllers.every((controller) => controller.text.isNotEmpty);
     });
   }
+
+void _verifyOtp() async {
+  final otp = _otpControllers.map((c) => c.text).join();
+
+  try {
+    // Retrieve userId from Hive
+    final box = Hive.box('user_data');
+    final userId = box.get('user_id', defaultValue: '');
+
+    if (userId.isEmpty) {
+      throw Exception('User ID not found. Please log in again.');
+    }
+
+    // Call the API to verify OTP
+    final result = await otpService.verifyOtp(userId, otp);
+
+    // Print the API response for debugging
+    print('API Response: $result');
+
+    if (result['success'] == true) {
+      // Save the token to Hive
+      final token = result['token'];
+      if (token != null) {
+        await box.put('token', token);
+      }
+
+      // Navigate based on userProfile status
+      if (result['userProfile'] == false) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileSetupPage()),
+        );
+      } else {
+        Navigator.pushNamed(context, '/dashboard'); // Assuming '/dashboard' is the route for the dashboard
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Error verifying OTP')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
+
+
+
 
   @override
   void dispose() {
@@ -80,6 +129,7 @@ class _OtpScreenState extends State<OtpScreen> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    _timer.cancel();
     super.dispose();
   }
 
@@ -87,23 +137,20 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Enter OTP'),
+        title: const Text(' '),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 28), // Larger back arrow
+          icon: const Icon(Icons.arrow_back, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Container(
-        color: Colors.white, // Set the whole page to have a white background
+        color: Colors.white,
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Left align the content
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title - Enter OTP
             Padding(
-              padding: const EdgeInsets.only(
-                  top: 200.0), // Move title closer to center
+              padding: const EdgeInsets.only(top: 200.0),
               child: const Text(
                 'Enter OTP',
                 style: TextStyle(
@@ -111,11 +158,9 @@ class _OtpScreenState extends State<OtpScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
-                textAlign: TextAlign.left, // Left align the title
               ),
             ),
             const SizedBox(height: 10),
-            // Subtitle - Mobile number in Blue
             mobileNumber.isNotEmpty
                 ? Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -130,14 +175,13 @@ class _OtpScreenState extends State<OtpScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigate back to login page when 'Change' is clicked
                             Navigator.pushNamed(context, '/login');
                           },
                           child: const Text(
                             "Change",
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.blue, // Blue color for "Change"
+                              color: Colors.blue,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -147,7 +191,6 @@ class _OtpScreenState extends State<OtpScreen> {
                   )
                 : Container(),
             const SizedBox(height: 40),
-            // OTP Entry TextField (6 individual boxes)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(6, (index) {
@@ -168,69 +211,51 @@ class _OtpScreenState extends State<OtpScreen> {
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.black),
-                    textAlign: TextAlign.center, // Center-align the digits
-                    decoration: InputDecoration(
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
                       counterText: '',
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 20.0, horizontal: 10.0),
                     ),
                   ),
                 );
               }),
             ),
             const SizedBox(height: 20),
-            // Resend OTP Button with Timer
             Row(
-              mainAxisAlignment: MainAxisAlignment.start, // Align to the left
               children: [
                 const Text(
                   'Resend OTP in ',
                   style: TextStyle(color: Colors.black38),
                 ),
                 Text(
-                  '$_start', // The dynamic seconds part
+                  '$_start',
                   style: const TextStyle(
                     color: Colors.black,
-                    fontWeight: FontWeight.bold, // Make only the seconds bold
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Text(
-                  ' seconds',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold,),
-                ),
+                const Text(' seconds'),
                 if (_start == 0)
                   TextButton(
                     onPressed: _resendOtp,
                     child: const Text(
                       'Resend OTP',
-                      style: TextStyle(
-                          color: Colors.blue), // Blue color for Resend OTP
+                      style: TextStyle(color: Colors.blue),
                     ),
                   ),
               ],
             ),
-
             const SizedBox(height: 20),
-            // Full-width, Center-aligned Login Button
             Center(
               child: SizedBox(
-                width: double.infinity, // Full width
+                width: double.infinity,
                 child: CustomButton(
                   text: 'Login',
-                  onPressed: isOtpValid
-                      ? () {
-                              Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ProfileSetupPage()), // Navigate directly to Profile Setup
-    );
-                        }
-                      : null, // Disable Login button if OTP is invalid
+                  onPressed: isOtpValid ? _verifyOtp : null,
                 ),
               ),
             ),
             const SizedBox(height: 40),
-            // Safe and Secure Text
             Center(
               child: Container(
                 padding:
@@ -241,19 +266,13 @@ class _OtpScreenState extends State<OtpScreen> {
                       const Color(0xFF02A032).withOpacity(0.08),
                       Colors.white.withOpacity(0.08),
                     ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.verified_user,
-                      color: Colors.green,
-                      size: 20,
-                    ),
+                    Icon(Icons.verified_user, color: Colors.green, size: 20),
                     SizedBox(width: 8),
                     Text(
                       '100% safe and secure',

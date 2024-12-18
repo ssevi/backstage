@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '/components/appbar.dart'; // Import your CommonAppBar
-import '/components/commonnavigationbar.dart'; // Import your CommonNavigationBar
+import '/components/blue_appbar.dart'; // Import your CommonAppBar
+// Import your CommonNavigationBar
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -9,8 +9,8 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
-        child: CommonAppBar(), // CommonAppBar with primary color as background
+        preferredSize: Size.fromHeight(120),
+        child: BlueAppBar(), // CommonAppBar with primary color as background
       ),
       body: SingleChildScrollView(
         physics: ClampingScrollPhysics(), // This removes the bouncing effect
@@ -220,7 +220,25 @@ class MorePage extends StatelessWidget {
                   size: 20), // Go arrow on the right
             ),
             onTap: () {
-              // Handle menu item tap if necessary
+              if (title == 'Team Members') {
+                Navigator.pushNamed(
+                    context, '/team_members'); // Navigate to team_members page
+              }
+              if (title == 'About Company') {
+                Navigator.pushNamed(
+                    context, '/about_company'); // Navigate to team_members page
+              }
+              if (title == 'Links') {
+                Navigator.pushNamed(context, '/links');
+              } 
+              if (title == 'Bank Details') {
+                Navigator.pushNamed(context, '/bank_details');
+              } 
+              if (title == 'Terms & Conditions') {
+                Navigator.pushNamed(context,
+                    '/terms_conditions'); // Navigate to team_members page
+              }
+              // Add additional navigation logic for other menu items if needed
             },
           ),
           // Only show the divider if it's not the last item

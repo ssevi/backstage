@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class Calendar extends StatefulWidget {
-  const Calendar({Key? key}) : super(key: key);
+  const Calendar({super.key});
 
   @override
   _CalendarState createState() => _CalendarState();
 }
 
 class _CalendarState extends State<Calendar> {
-  DateTime _currentDate = DateTime.now();
+  final DateTime _currentDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class _CalendarState extends State<Calendar> {
             
             const SizedBox(height: 20),
             Text(
-              'Selected date: ${_currentDate.toLocal()}'.split(' ')[0], // Display selected date
+              'Selected Calender Page', // Display selected date
               style: const TextStyle(fontSize: 16),
             ),
           ],

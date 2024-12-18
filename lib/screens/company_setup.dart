@@ -5,6 +5,10 @@ import '/styles/colors.dart'; // Importing your custom colors
 import 'package:permission_handler/permission_handler.dart';
 import '/components/button.dart'; // Importing your custom button
 import '/screens/dashboard.dart'; // Importing CompanySetupPage
+import '/services/company_setup_service.dart';
+import 'package:hive/hive.dart';
+import '/services/constants.dart';
+import '/components/popup_message.dart';
 
 class CompanySetupPage extends StatefulWidget {
   const CompanySetupPage({super.key});
@@ -19,6 +23,8 @@ class _CompanySetupPageState extends State<CompanySetupPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
   bool _isButtonEnabled = false;
+  final CompanySetupService _service = CompanySetupService(baseUrl);
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -45,7 +51,51 @@ class _CompanySetupPageState extends State<CompanySetupPage> {
       );
     }
   }
+  Future<void> _submitProfile({bool isSkip = false}) async {
+    setState(() {
+      _isLoading = true;
+    });
 
+    try {
+      final box = Hive.box('user_data');
+      final userId = box.get('user_id', defaultValue: '');
+      final userFullName = box.get('userFullName', defaultValue: '');
+      final mobileNumber = box.get('mobile_number', defaultValue: '');
+
+
+      if (userId.isEmpty) {
+        throw Exception('User ID not found. Please log in again.');
+      }
+
+      // Prepare company data
+      final companyName = isSkip ? userFullName : _nameController.text.trim();
+      final companyContactNumber = isSkip ? mobileNumber : _contactController.text.trim();
+      final companyEmail = isSkip ? null : _emailController.text.trim();
+
+      final response = await _service.createCompanyProfile(
+        userId: userId,
+        companyName: companyName,
+        companyContactNumber: companyContactNumber,
+        companyEmail: companyEmail,
+        companyProfilePhoto: _selectedImage,
+      );
+
+
+      showCustomPopup(context, 'Profile Added Successfully.');
+
+
+Navigator.pushNamed(context, '/dashboard');
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
@@ -178,31 +228,18 @@ Widget build(BuildContext context) {
                       width: double.infinity,
                       child: CustomButton(
                         text: 'Create Profile',
-                        onPressed: _isButtonEnabled
-                            ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => const Dashboard()), // Navigate to Dashboard
-                                );
-                              }
+                        onPressed: _isButtonEnabled && !_isLoading
+                            ? () => _submitProfile(isSkip: false)
                             : null,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Dashboard()), // Navigate to Dashboard
-                        );
-                      },
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                                          TextButton(
+                        onPressed: !_isLoading ? () => _submitProfile(isSkip: true) : null,
+                                               
+
+                        child: const Text('Skip'),
                       ),
-                    ),
                   ],
                 ),
               ),
