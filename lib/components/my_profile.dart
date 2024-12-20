@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _mobileController = TextEditingController();
   bool _isButtonEnabled = false;
   bool _isLoading = false;
-  bool _isVerified = false; // Tracks if the mobile number is verified.
+  final bool _isVerified = false; // Tracks if the mobile number is verified.
 
   @override
   void initState() {

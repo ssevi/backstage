@@ -1,30 +1,30 @@
 import 'package:backstage/styles/colors.dart';
 import 'package:flutter/material.dart';
-import '/components/appbar.dart'; // Your custom AppBar
-import '/screens/project_added.dart'; // Importing ProjectAdded screen (as per your current code)
 import 'package:hive/hive.dart';
-import '/services/profile_service.dart'; // Import your ProfileService
-import '/services/constants.dart'; // Import constants for baseUrl
-import 'dart:convert';
+import '/services/about_company_service.dart';
+import '/services/constants.dart';
+import 'about_company_template.dart';
 
 class AboutCompany extends StatelessWidget {
   const AboutCompany({super.key});
 
-  // Fetch user profile from the service
-  Future<Map<String, dynamic>> fetchUserProfile() async {
-    final profileService = ProfileService(baseUrl);
+  // Fetch templates from the service
+  Future<List<Map<String, dynamic>>> fetchTemplates() async {
+    final service = AboutCompanyService(baseUrl);
     final box = Hive.box('user_data');
     final userId = box.get('user_id', defaultValue: '');
-    return await profileService.getProfile(userId);
+    return await service.getTemplates(userId);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          const Color(0xFFF8F8F8), // Background for the entire screen
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80), // Set custom AppBar height
         child: Container(
-          color: Colors.grey.shade100, // AppBar background color
+          color: const Color(0xFFF8F8F8), // AppBar background color
           child: Column(
             mainAxisAlignment:
                 MainAxisAlignment.end, // Align content to the bottom
@@ -62,115 +62,120 @@ class AboutCompany extends StatelessWidget {
           ),
         ),
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchUserProfile(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchTemplates(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text('No data found'));
           }
 
-          // Extract data from the snapshot
-          final profileData = snapshot.data!;
-          final name = profileData['profile']['userFullName'] ?? 'Unknown';
-          final email = profileData['profile']['userEmail'] ?? 'Unknown';
-          final profileImageBase64 =
-              profileData['profile']['userProfilePhoto'] ?? '';
-          final mobile = Hive.box('user_data').get('mobile_number', defaultValue: 'Unknown');
-
-          ImageProvider profileImage = profileImageBase64.isNotEmpty
-              ? MemoryImage(base64Decode(profileImageBase64))
-              : const AssetImage('assets/images/default_profile.jpg')
-                  as ImageProvider;
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                top: 0,
-                child: Image.asset(
-                  'assets/images/home_bg.png', // Replace with your background image
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                    top: 30.0,
-                    left: 16.0,
-                    right: 16.0), // Adjust padding to account for AppBar height
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-
-                    // First container (existing rectangle)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/contractor.png', // Replace with your icon path
-                            width: 50,
-                            height: 50,
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'No Data Available.',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'You haven\'t created any template.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 30),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProjectAdded(),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(200, 50),
-                              backgroundColor: AppColors.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Create a Template',
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                           
-                          ),
-
-                        ],
-                      ),
+          final templates = snapshot.data ?? [];
+          if (templates.isEmpty) {
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(
+                        16.0), // Margin around the container
+                    padding: const EdgeInsets.all(
+                        16.0), // Padding inside the container
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/contractor.png',
+                          width: 50,
+                          height: 50,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'No Data Available.',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'You haven\'t created any template.',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AboutCompanyTemplate(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(
+                                double.infinity, 50), // Full-width button
+                            backgroundColor: AppColors.primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Create a Template',
+                            style: TextStyle(fontSize: 20, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
+            );
+          } else {
+            return Padding(
+  padding: const EdgeInsets.all(16.0), // Outer margin around the entire container
+  child: Container(
+    width: double.infinity, // Make it full width
+    margin: const EdgeInsets.all(16.0), // Margin to simulate space around the card
+    padding: const EdgeInsets.all(16.0), // Inner padding for content inside the container
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade300),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'About Company',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          templates[0]['content'] ?? 'No content available.',
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+
+          }
         },
       ),
     );

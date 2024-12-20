@@ -1,11 +1,9 @@
 import 'package:backstage/styles/colors.dart';
 import 'package:flutter/material.dart';
-import '/screens/project_added.dart';
 import 'package:hive/hive.dart';
 import '/services/profile_service.dart';
 import '/services/constants.dart';
 import 'dart:convert';
-import '/services/crew_service.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'import_contact.dart';

@@ -17,7 +17,7 @@ class CustomButton extends StatelessWidget {
         backgroundColor: WidgetStateProperty.resolveWith<Color>(
           (states) {
             if (states.contains(WidgetState.disabled)) {
-              return Colors.blue.withOpacity(0.64);
+              return const Color(0xFF0076FF).withOpacity(0.64);
             }
             return Colors.blue;
           },

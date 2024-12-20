@@ -28,8 +28,8 @@ class CompanySetupService {
         "companyContactNumber": companyContactNumber,
         // if (companyEmail != null) "companyEmail": companyEmail,
         // if (photoBase64 != null) "companyProfilePhoto": photoBase64,
-        "companyEmail": companyEmail ?? null,
-"companyProfilePhoto": photoBase64 ?? null,
+        "companyEmail": companyEmail,
+"companyProfilePhoto": photoBase64,
 
       };
 print(body);

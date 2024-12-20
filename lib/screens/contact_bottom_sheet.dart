@@ -9,7 +9,7 @@ import '/components/popup_message.dart';
 class ContactBottomSheet extends StatefulWidget {
   final Contact contact;
 
-  const ContactBottomSheet({Key? key, required this.contact}) : super(key: key);
+  const ContactBottomSheet({super.key, required this.contact});
 
   @override
   _ContactBottomSheetState createState() => _ContactBottomSheetState();

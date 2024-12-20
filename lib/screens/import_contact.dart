@@ -5,7 +5,7 @@ import 'contact_bottom_sheet.dart';
 class ContactImportPage extends StatefulWidget {
   final List<Contact> contacts;
 
-  const ContactImportPage({Key? key, required this.contacts}) : super(key: key);
+  const ContactImportPage({super.key, required this.contacts});
 
   @override
   _ContactImportPageState createState() => _ContactImportPageState();

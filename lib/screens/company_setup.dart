@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart'; // For picking images
 import '/styles/colors.dart'; // Importing your custom colors
 import 'package:permission_handler/permission_handler.dart';
 import '/components/button.dart'; // Importing your custom button
-import '/screens/dashboard.dart'; // Importing CompanySetupPage
+// Importing CompanySetupPage
 import '/services/company_setup_service.dart';
 import 'package:hive/hive.dart';
 import '/services/constants.dart';

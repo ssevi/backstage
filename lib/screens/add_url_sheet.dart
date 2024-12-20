@@ -9,13 +9,13 @@ class AddLinkBottomSheet extends StatefulWidget {
   final String buttonText;
 
   const AddLinkBottomSheet({
-    Key? key,
+    super.key,
     required this.iconPath,
     required this.title,
     required this.labelText,
     required this.hintText,
     required this.buttonText,
-  }) : super(key: key);
+  });
 
   @override
   State<AddLinkBottomSheet> createState() => _AddLinkBottomSheetState();

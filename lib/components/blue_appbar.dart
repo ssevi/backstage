@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '/services/profile_service.dart'; // Import your profile service
 import '/services/constants.dart';
